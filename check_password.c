@@ -1,20 +1,20 @@
 /*
-	check_password - Módulo de checagem de senhas para ppolicy
+    check_password - ppolicy password checking module for OpenLDAP
 
-	Author: Fernando Mercês (fernando@mentebinaria.com.br)
+    Copyright (C) 2012-2015 Fernando Mercês <nandu88 *noSPAM* gmail.com>
 
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <stdio.h>
@@ -24,9 +24,9 @@
 #include <portable.h>
 #include <slap.h>
 
-#define MAX_LINE 51
-#define MAX_LOGFILE 201
-#define MAX_LOG_MSG 61
+#define MAX_LINE 60
+#define MAX_LOGFILE 250
+#define MAX_LOG_MSG 150
 
 struct config
 {
@@ -53,7 +53,7 @@ void logit(char s[])
 	if (now)
 		now[strlen(now)-1] = '\0';	
 
-	fprintf(fp, "%s - %s\n", now, s);
+	fprintf(fp, "error: %s - %s\n", now, s);
 	fclose(fp);
 }
 
@@ -108,56 +108,6 @@ fp = fopen("check_password.conf", "r");
 	fclose(fp);
 }
 
-
-/*
-	Function mmfstrcasestr()
-	Author: Marcelo M. Fleury (marcelomf@gmail.com)
-*/
-char *mmfstrcasestr(const char *haystack, char *needle)
-{
-	char *cpyResult, *originHayStack = (char *) haystack;
-	char *cpyHaystackLower;
-	char *cpyNeedleLower;
-	int numberOfAddress, i = 0;
-
-	if(haystack == NULL || needle == NULL)
-		return NULL;
-
-	cpyHaystackLower = malloc(sizeof(char)*(strlen(haystack)+1));
-	if(cpyHaystackLower == NULL)
-		return NULL;
-
-	cpyNeedleLower = malloc(sizeof(char)*(strlen(needle)+1));
-	if(cpyNeedleLower == NULL)
-		return NULL;
-
-	memset(cpyHaystackLower, '\0', sizeof(char)*(strlen(haystack)+1));
-	memset(cpyNeedleLower, '\0', sizeof(char)*(strlen(needle)+1));
-
-	for(i = 0; *haystack; haystack++, i++)
-		cpyHaystackLower[i] = tolower(*haystack);
-
-	for(i = 0; *needle; needle++, i++)
-		cpyNeedleLower[i] = tolower(*needle);
-
-	cpyResult = strstr(cpyHaystackLower, cpyNeedleLower);
-
-	if(cpyResult == NULL)
-	{
-		free(cpyHaystackLower);
-		free(cpyNeedleLower);
-		return NULL;
-	}
-	else
-	{
-		numberOfAddress = (cpyResult-cpyHaystackLower);
-		free(cpyHaystackLower);
-		free(cpyNeedleLower);
-		return originHayStack += numberOfAddress;
-	}
-}
-
-/* Regras (a), (b), (c), (d) e (f) (g)*/
 static int basic_rules(const char *pw)
 {
 	char c = '\0';
@@ -167,7 +117,7 @@ static int basic_rules(const char *pw)
 	{
 		if (config.log)
 		{
-			snprintf(msg, MAX_LOG_MSG, "erro: senha vazia");
+			snprintf(msg, MAX_LOG_MSG, "empty password");
 			logit(msg);
 		}
 		return 0;
@@ -180,7 +130,7 @@ static int basic_rules(const char *pw)
 	{
 		if (config.log)
 		{
-			snprintf(msg, MAX_LOG_MSG, "erro: tamanho da senha (%d) menor que 6", size);
+			snprintf(msg, MAX_LOG_MSG, "password length (%d) is lower than 6", size);
 			logit(msg);
 		}
 		return 0;
@@ -190,7 +140,7 @@ static int basic_rules(const char *pw)
 	{
 		if (config.log)
 		{
-			snprintf(msg, MAX_LOG_MSG, "erro: tamanho da senha (%d) maior que 8", size);
+			snprintf(msg, MAX_LOG_MSG, "password length (%d) is bigger than 8", size);
 			logit(msg);
 		}
 		return 0;
@@ -202,7 +152,7 @@ static int basic_rules(const char *pw)
 		{
 			if (config.log)
 			{
-				snprintf(msg, MAX_LOG_MSG, "erro: caractere %c nao e alfanumerico", pw[i]);
+				snprintf(msg, MAX_LOG_MSG, "character %c is not alpha-numeric", pw[i]);
 				logit(msg);
 			}
 			return 0;
@@ -211,7 +161,7 @@ static int basic_rules(const char *pw)
 		{
 			if (config.log)
 			{
-				snprintf(msg, MAX_LOG_MSG, "erro: caractere %c repetido em sequencia", pw[i]);
+				snprintf(msg, MAX_LOG_MSG, "character %c repeated sequentially", pw[i]);
 				logit(msg);
 			}
 			return 0;
@@ -226,7 +176,7 @@ static int basic_rules(const char *pw)
 	{
 		if (config.log)
 		{
-			snprintf(msg, MAX_LOG_MSG, "erro: nao ha nenhum caractere minusculo");
+			snprintf(msg, MAX_LOG_MSG, "no lower-case characters");
 			logit(msg);
 		}
 		return 0;
@@ -235,7 +185,7 @@ static int basic_rules(const char *pw)
 	{
 		if (config.log)
 		{
-			snprintf(msg, MAX_LOG_MSG, "erro: nao ha nenhum caractere maiusculo na senha");
+			snprintf(msg, MAX_LOG_MSG, "no upper-case characters");
 			logit(msg);
 		}
 		return 0;
@@ -244,17 +194,17 @@ static int basic_rules(const char *pw)
 	{
 		if (config.log)
 		{
-			snprintf(msg, MAX_LOG_MSG, "erro: nao ha nenhum digito na senha");
+			snprintf(msg, MAX_LOG_MSG, "no numbers");
 			logit(msg);
 		}
 		return 0;
 	}
 
-	if (mmfstrcasestr(pw, "senha"))
+	if (strcasestr(pw, "password"))
 	{
 		if (config.log)
 		{
-			snprintf(msg, MAX_LOG_MSG, "erro: senha possui a palavra \"senha\"");
+			snprintf(msg, MAX_LOG_MSG, "password contains the word \"password\"");
 			logit(msg);
 		}
 		return 0;
@@ -263,7 +213,6 @@ static int basic_rules(const char *pw)
 	return 1;
 }
 
-/* Regra (e) */
 static int keyboard_seq(const char *pw)
 {
 	const char kbseq[] = "qwertyuiopasdfghjklzxcvbnm1234567890";
@@ -284,7 +233,7 @@ static int keyboard_seq(const char *pw)
 			{
 				if (config.log)
 				{
-					snprintf(msg, MAX_LOG_MSG, "erro: senha possui sequencia de teclado");
+					snprintf(msg, MAX_LOG_MSG, "password contains a keyboard sequence");
 					logit(msg);
 				}
 				return 0;
@@ -299,31 +248,31 @@ static int checkdate(const char *pw)
 {
 	time_t now;
 	struct tm *d;
-	char ano[] = "0000";
+	char year[] = "0000";
 	char mname[] = "Xxx";
 	char mnum[]= "00";
 
 	(void) time(&now);
 	d = localtime(&now);
 
-	(void) strftime(ano, 5, "%Y", d);
+	(void) strftime(year, 5, "%Y", d);
 	(void) strftime(mname, 4, "%b", d);
 	(void) strftime(mnum, 3, "%m", d);
 
-	if (strstr(pw, ano))
+	if (strstr(pw, year))
 	{
 		if (config.log)
 		{
-			snprintf(msg, MAX_LOG_MSG, "erro: senha possui o ano atual (%s)", ano);
+			snprintf(msg, MAX_LOG_MSG, "password contains the current year (%s)", year);
 			logit(msg);
 		}
 		return 0;
 	}
-	if (mmfstrcasestr(pw, mname))
+	if (strcasestr(pw, mname))
 	{
 		if (config.log)
 		{
-			snprintf(msg, MAX_LOG_MSG, "erro: senha possui o nome do mes atual (%s)", mname);
+			snprintf(msg, MAX_LOG_MSG, "password contains the current month name (%s)", mname);
 			logit(msg);
 		}
 		return 0;
@@ -332,7 +281,7 @@ static int checkdate(const char *pw)
 	{
 		if (config.log)
 		{
-			snprintf(msg, MAX_LOG_MSG, "erro: senha possui o numero do mes atual (%s)", mnum);
+			snprintf(msg, MAX_LOG_MSG, "password contains the current month number (%s)", mnum);
 			logit(msg);
 		}
 		return 0;
@@ -343,29 +292,29 @@ static int checkdate(const char *pw)
 
 static int checkusername(const char *dn, const char *pw)
 {
-	char *igual = strchr(dn, '=');
+	char *equal = strchr(dn, '=');
 	char nome[5];
 	register int i;
 
-	if (!igual)
+	if (!equal)
 	{
 		if (config.log)
 		{
-			snprintf(msg, MAX_LOG_MSG, "erro: recebido dn vazio");
+			snprintf(msg, MAX_LOG_MSG, "empty dn received");
 			logit(msg);
 		}
 		return 0;
 	}
 
 	for (i=0; i<4; i++)
-		nome[i] = *(igual+i+1);
+		nome[i] = *(equal+i+1);
 	nome[4] = '\0';
 
-	if (mmfstrcasestr(pw, nome))
+	if (strcasestr(pw, nome))
 	{
 		if (config.log)
 		{
-			snprintf(msg, MAX_LOG_MSG, "erro: senha possui o nome de usuario");
+			snprintf(msg, MAX_LOG_MSG, "password contains the username");
 			logit(msg);
 		}
 		return 0;

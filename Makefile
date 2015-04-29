@@ -1,42 +1,35 @@
-# Makefile do check_password.c
-# modulo do ppolicy para checagem de senhas
-
-# Configuacao do caminho dos fontes do OpenLDAP
-# E necessario compilar parcialmente o OpenLDAP neste
-# caminho com ./configure && make depends
-SLAPD_SOURCE=/usr/src/openldap-2.4.23
+# OpenLDAP source code path
+LDAP_SRC ?= /usr/src/openldap
 	
-# Diretorio de destino do modulo
-DEST=/usr/lib/ldap
+# Module destination path
+DEST ?= /lib/ldap
 
-# Caminho do arquivo de configuracao do modulo
-CONF_FILE_PATH="/etc/ldap/check_password.conf"
+# check-password configuration file path
+CONF_FILE_PATH ?= "/etc/check_password.conf"
 
-# Caminhos das ferramentas necessarias
-CC=/usr/bin/gcc
-STRIP=/usr/bin/strip
+CC ?= gcc
+STRIP = strip
 
-# Nao alterar daqui em diante!
 SRC=check_password.c
 VERSION=1.5
 CFLAGS=-O2 -W -Wextra -Wall -fpic -c
-DFLAGS+=-D'CONF_FILE_PATH=$(CONF_FILE_PATH)'
-INCLUDES=-I$(SLAPD_SOURCE)/include -I$(SLAPD_SOURCE)/servers/slapd
-	
+DFLAGS+=-D'CONF_FILE_PATH=$(CONF_FILE_PATH)' -D_GNU_SOURCE 
+INCLUDES=-I$(LDAP_SRC)/include -I$(LDAP_SRC)/servers/slapd
+
 all:
 	$(CC) $(CFLAGS) $(INCLUDES) $(DFLAGS) -o check_password.o $(SRC)
 	$(CC) -shared -o check_password.so check_password.o
-	
+
 install:
 	$(STRIP) check_password.so
 	cp check_password.so $(DEST)/check_password.so.$(VERSION)
 	chmod 0644 $(DEST)/check_password.so.$(VERSION)
 	ln -sf $(DEST)/check_password.so.$(VERSION) $(DEST)/check_password.so
-	
+
 clean:
-	rm -f check_password.so
 	rm -f check_password.o
-	
+	rm -f check_password.so
+
 uninstall:
 	rm -f $(DEST)/check_password.so.$(VERSION)
 	rm -f $(DEST)/check_password.so
