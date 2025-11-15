@@ -1,39 +1,41 @@
 check-password
-==============
+===
 
-check-password is an example ppolicy module to enforce strength passwords checks in OpenLDAP
+check-password is an example ppolicy module used to enforce strong password checks in OpenLDAP
 
 ## Compiling
 
-1. Download the correct source code package for your system from OpenLDAP website.
+1. Download the appropriate source code package for your system from the OpenLDAP website.
 
-2. Extract it in the target machine and use OpenLDAP's Makefile to generate
-some required headers:
+2. Extract it on the target machine and use OpenLDAP’s Makefile to generate the required headers:
 
-    $ tar xf openldap-*.tar.gz
-    $ cd opendalp*
-    $ ./configure --enable-bdb=no --enable-hdb=no 
-    $ make depend
 
- We just disable BDB/HDB dependency to make things easier. It doesn't
- affect your real OpenLDAP installation.
+```sh
+tar xf openldap-*.tgz
+cd opendalp*
+make depend
+```
 
-3. Now enter check-password module directory and call make, passing the OpenLDAP source
-code path through LDAP_SRC variable. For example:
+3. Now enter the check-password module directory and run `make`, passing the OpenLDAP source code path through the `LDAP_SRC` variable. For example:
 
-    $ LDAP_SRC=/home/myuser/openldap-2.4.40 make
+```sh
+LDAP_SRC=/home/myuser/openldap-2.4.40 make
+```
 
-You may also want to configure module destination path and configuration file path together
-with make invocation:
+You may also want to configure the module destination path and the configuration file path together with the `make` invocation:
 
-    $ DEST=/usr/lib/ldap/modules CONF_FILE_PATH=/etc/ldap/check_password.conf LDAP_SRC=/home/myuser/openldap-2.4.40 make
+```sh
+DEST=/usr/lib/ldap/modules CONF_FILE_PATH=/etc/ldap/check_password.conf LDAP_SRC=/home/myuser/openldap-2.4.40 make
+```
 
 ## Installing
 
-    # make install
+```sh
+make install
+```
 
 ## Configuring
 
-1. Configure basic options in the config file defined by the variable CONF_FILE_PATH
-2. Set the pwdCheckQuality attribute on ppolicy to either 1 or 2
-3. Set pwdCheckModule attribute with module file path (.so)
+1. Configure basic options in the config file specified by the `CONF_FILE_PATH` variable.
+2. Set the `pwdCheckQuality` attribute in **ppolicy** to either **1** or **2**.
+3. Set the `pwdCheckModule` attribute to the path of the module file (`.so`).
