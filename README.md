@@ -13,6 +13,7 @@ check-password is ppolicy module used to enforce strong password checks in OpenL
 ```shell
 tar xf openldap-*.tgz
 cd opendalp*
+./configure
 make depend
 ```
 
